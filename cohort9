@@ -1,63 +1,50 @@
-pipeline{
-    agent any
-    tools{
-        maven "mvn3.6.3"
+  pipeline{
+  agent any
+  tools{
+    maven "mvn3.6.3"
+  }
+  stages{
+    stage("1.CodeClone"){
+      steps{
+        git credentialsId: 'Github-Credd', url: 'https://github.com/ayooluwanimi/web-app.git'
     }
-    stages{
-        stage ("1CodeClone"){
-            steps{
-                git credentialsId: 'Github-Credd', url: 'https://github.com/ayooluwanimi/web-app.git''
-            }
-        }
-        stage ("2Build"){
-            steps{
-                sh "echo startof maven build"
-                sh "mvn clean package"
-                }
-        }
-        stage ("3CodeQuality"){
-            steps{
-                sh "echo start of code quality test"
-                sh "mvn sonar:sonar"
-            }
-        }
-        stage ("4BackupArtifacts"){
-          steps{
-        sh "echo backup artifacts to nexus"
-                sh "mvn deploy"
-            }
-        }
-        stage ("5Deploy to UAT"){
-            steps{
-                sh "echo deploy to UAT env"
-                deploy adapters: [tomcat9(credentialsId: 'tomcat-creddd', path: '', url: 'http://172.31.82.223:8080/')], contextPath: null, war: 'target/*.war'
-            }
-        }
-        stage("6Approval"){
-            steps{
-                sh "echo Approval Requested"
-                timeout(time:2, unit:'DAYS'){
-                    input message:'Approval for Production env'
-                }
-            }
-        }
-        stage ("5Deploy to UAT"){
-            steps{
-                sh "echo deploy to UAT env"
-                deploy adapters: [tomcat9(credentialsId: 'tomcat-creddd', path: '', url: 'http://172.31.82.223:8080/')], contextPath: null, war: 'target/*.war'
-            }
-        }
-        stage('8SlackNotification'){
-            steps{
-    sh "echo notification started"
-    slackSend channel: 'c9-devsquad-group-4', message: 'Build success'
-}
     }
-    stage('9EmailNotification'){
-        steps{
-    sh "echo Email Notification"
-    emailext body: 'Build success', subject: 'Email notification test', to: 'ayooluwanimi05@gmail.com'
+    stage("2. build"){
+      steps{
+        sh "echo start of maven build"
+        sh "mvn clean package"
+      }
+    }
+    stage("3. Code Quality"){
+      steps{
+        sh "echo start of code quality"
+        sh "mvn sonar:sonar"
+      }
+    }
+    stage("4. Backup"){
+      steps{
+        sh "echo backup to nexus"
+        sh "mvn deploy"
+      }
+    }
+    stage("5. Deploy to UAT"){
+      steps{
+        sh "echo deploy to UAT Environment"
+        deploy adapters: [tomcat9(credentialsId: 'tomcat-creddd', path: '', url: 'http://172.31.82.223:8080/')], contextPath: null, war: 'target/*.war'
+      }
+    }
+    stage("6. Approval"){
+      steps{
+        sh "echo approval needed"
+        timeout(time:2, unit:'DAYS'){
+          input message:'Approval for Production eni'
+  }
+  }
 }
-}
-}
+    stage("5. Deploy to Prod"){
+      steps{
+        sh "echo deploy to Prod Environment"
+        deploy adapters: [tomcat9(credentialsId: 'tomcat-creddd', path: '', url: 'http://172.31.82.223:8080/')], contextPath: null, war: 'target/*.war'
+      }
+    }
 }
